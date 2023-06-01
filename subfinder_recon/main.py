@@ -18,10 +18,7 @@ class SubDomainReconTool:
         subfinderList = SubfinderTool(self.domain).enumerate_subdomains()
         # listDomain = amassList + assetfinderList + findomainList + subfinderList
         listDomain = assetfinderList + findomainList + subfinderList
-
         uniqueList = list(set(listDomain))
-
-        print(uniqueList)
         
         print(f"[+] The final script finish in: {time.time() - startTime}")
         

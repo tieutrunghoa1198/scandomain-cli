@@ -2,6 +2,7 @@ import typer
 from subfinder_recon.main import SubDomainReconTool
 from httpx_tool.httpx_tool import ToolHTTPX
 from scan_api import acunetix
+from Priority.priority import AmassTool
 app = typer.Typer()
 
 
@@ -21,7 +22,9 @@ def goodbye(name: str, formal: bool = False):
 def scan(url: str):
     arr = scanDomainTool(url)
     liveDomains = httpxTool(arr)
-    acunetixTool(liveDomains)
+    scannableUrls = amassTool(liveDomains, url)
+    acunetixTool(scannableUrls)
+    
 
 def scanDomainTool(url: str):
     if len(url) == 0:
@@ -37,6 +40,12 @@ def httpxTool(arr: list):
     tool = ToolHTTPX(arr)
     result = tool.enumerate_subdomains()
     print(result)
+    return result
+
+
+def amassTool(listDomains, rootDomain):
+    tool = AmassTool(listDomains, rootDomain)
+    result = tool.run()
     return result
 
 
