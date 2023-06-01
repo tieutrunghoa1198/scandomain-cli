@@ -7,7 +7,7 @@ class ToolHTTPX:
     def enumerate_subdomains(self):
         listLiveUrl = []
         for subdomain in self.subdomains:
-            httpx_command = ['httpx', '-mc', '200,302', '-u', subdomain]
+            httpx_command = ['httpx', '-mc', '200,201,206,302,403', '-u', subdomain]
             httpx_output = subprocess.check_output(httpx_command, universal_newlines=True)
             url = httpx_output.strip().splitlines()
             if len(url) != 0:
