@@ -224,5 +224,39 @@ def getscan():
     except Exception as e:
         raise e
 
+# https://localhost:13443/api/v1/scans/bfbb3128-7abe-40e5-96f9-cf228f2e213d/results/e039d822-6dd5-479b-8a1d-ea26a2cb5643/vulnerabilities
+def get_result_id(scan_id: str): 
+    if len(scan_id) == 0: return
+    res = get_request('scans/' + scan_id + '/results')
+    return json.loads(res.content)['results'][0]['result_id']
+
+
+def get_list_vuln(scan_id: str, result_id: str):
+    # condition if result if not exist
+    res = get_request('scans/' + scan_id + '/results/' + result_id + '/vulnerabilities')
+    arr = json.loads(res.content)['vulnerabilities']
+    results = format_vuln_output(arr) 
+    print(results)
+    return results
+
+
+def format_vuln_output(array: list):
+    if len(array) == 0: return
+    list_results = []
+    for e in array: 
+        element = {
+            'severity': e['severity'],
+            'vuln_name': e['vt_name'],
+            'param': e['affects_detail'],
+            'url_location': e['affects_url']
+        }
+        list_results.append(element)
+    return list_results
+
+def get_request(url: str):
+    if len(url) == 0: return
+    baseUrl = tarurl + '/api/v1/'
+    return requests.get(baseUrl + url,headers=headers,timeout=30,verify=False)
+
 if __name__ == '__main__':
     print (config('http://testhtml5.vulnweb.com/'))
