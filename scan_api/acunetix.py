@@ -4,6 +4,7 @@
 import json
 import requests
 import urllib3
+import time
 '''
 import requests.packages.urllib3.util.ssl_
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL'
@@ -224,18 +225,18 @@ def getscan():
     except Exception as e:
         raise e
 
-# https://localhost:13443/api/v1/scans/bfbb3128-7abe-40e5-96f9-cf228f2e213d/results/e039d822-6dd5-479b-8a1d-ea26a2cb5643/vulnerabilities
+# https://localhost:13443/api/v1/scans/bfbb3128-7abe-40e5-96f9-cf228f2e213d/results/ -> get result id 
 def get_result_id(scan_id: str): 
     if len(scan_id) == 0: return
     res = get_request('scans/' + scan_id + '/results')
     return json.loads(res.content)['results'][0]['result_id']
 
-
+# https://localhost:13443/api/v1/scans/bfbb3128-7abe-40e5-96f9-cf228f2e213d/results/e039d822-6dd5-479b-8a1d-ea26a2cb5643/vulnerabilities -> get list loi~
 def get_list_vuln(scan_id: str, result_id: str):
     # condition if result if not exist
     res = get_request('scans/' + scan_id + '/results/' + result_id + '/vulnerabilities')
     arr = json.loads(res.content)['vulnerabilities']
-    results = format_vuln_output(arr) 
+    results = format_vuln_output(arr)
     print(results)
     return results
 
@@ -244,14 +245,70 @@ def format_vuln_output(array: list):
     if len(array) == 0: return
     list_results = []
     for e in array: 
-        element = {
-            'severity': e['severity'],
-            'vuln_name': e['vt_name'],
-            'param': e['affects_detail'],
-            'url_location': e['affects_url']
-        }
-        list_results.append(element)
+        # element = {
+        #     'severity': e['severity'],
+        #     'vuln_name': e['vt_name'],
+        #     'param': e['affects_detail'],
+        #     'url_location': e['affects_url']
+        # }
+        output = f"[Severity] {e['severity']} || [Vuln Name] {e['vt_name']}"
+        list_results.append(output)
     return list_results
+
+
+def getstatuscode(scan_id):
+    try:
+        response = requests.get(tarurl+"/api/v1/scans/"+str(scan_id),headers=headers,timeout=30,verify=False)
+        result = json.loads(response.content)
+        status = result['current_session']['status']
+        #If it is completed, it means the end. A report can be generated
+        if status == "completed":
+            return 1
+        else:
+            return 0
+    except Exception as e:
+        print(str(e))
+        return
+    
+
+def print_scan_report(scan_id):
+    headers = {
+        "X-Auth": apikey,
+        "Content-Type": "application/json"
+    }
+    url = f"{tarurl}/scans/{scan_id}/report"
+    response = requests.get(url, headers=headers)
+    report = response.json()
+    print(report)
+
+
+def config_list(arr: list):
+    ids = []
+    for domain in arr:
+        id = config(domain)
+        ids.append(id)
+    return ids
+
+
+def process(scan_ids):
+    completed_scans = set()
+
+    while True:
+        for scan_id in scan_ids:
+            if scan_id in completed_scans:
+                continue  # Skip if the scan has already been completed
+
+            scan_status = getstatuscode(scan_id)
+            if scan_status == 1:
+                completed_scans.add(scan_id)
+                print(f"Scan ID: {scan_id}")
+                print_scan_report(scan_id)
+                print("=" * 50)
+
+        if len(completed_scans) == len(scan_ids):
+            break  # Break the loop if all scans are completed
+
+        time.sleep(60)  # Wait for 1 minute before checking again
 
 def get_request(url: str):
     if len(url) == 0: return

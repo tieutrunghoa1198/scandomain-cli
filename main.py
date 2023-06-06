@@ -50,9 +50,13 @@ def amassTool(listDomains, rootDomain):
 
 
 def acunetixTool(arr: list):
-    for domain in arr: 
-        id = acunetix.config(domain)
-        print(id)
+    scan_ids = acunetix.config_list(arr)
+    for i in scan_ids:
+        print(i)
+    print("Waiting for acunetix to return the result:")
+    acunetix.process(scan_ids)
+    print("Done")
+
 
 if __name__ == "__main__":
     app()
